@@ -1,6 +1,16 @@
 <Project>
+  <PropertyGroup>
+    <UseXmlSerializerGenerator Condition=" '$(UseXmlSerializerGenerator)' == '' ">false</UseXmlSerializerGenerator>
+  </PropertyGroup>
 
-  <Target Name="RemoveRuntimeAssemblies" BeforeTargets="GenerateRspFiles">
+  <ItemGroup Condition="$(UseXmlSerializerGenerator)">  
+    <PackageReference Include="Microsoft.XmlSerializer.Generator" Version="8.0.0" GeneratePathProperty="True" />
+    <PackageReference Include="System.Memory" Version="4.6.0" />
+    
+    <DotNetCliToolReference Include="Microsoft.XmlSerializer.Generator" Version="8.0.0" />
+  </ItemGroup>
+
+  <Target Condition="$(UseXmlSerializerGenerator)" Name="RemoveRuntimeAssemblies" BeforeTargets="GenerateRspFiles">
     <ItemGroup>
       <_SGenReferences Include="@(ReferencePath)" Condition="'%(ReferencePath.FrameworkReferenceName)' != 'Microsoft.WindowsDesktop.App.WindowsForms'" />
     </ItemGroup>
@@ -10,7 +20,7 @@
   </Target>
 
   <!-- Copied from Microsoft.XmlSerializer.Generator -->
-  <Target Name="GenerateSerializationAssembly" AfterTargets="Build" Inputs="@(_SGenReferences);@(IntermediateAssembly)" Outputs="$(_SerializerDllIntermediateFolder)">
+  <Target Condition="$(UseXmlSerializerGenerator)" Name="GenerateSerializationAssembly" AfterTargets="Build" Inputs="@(_SGenReferences);@(IntermediateAssembly)" Outputs="$(_SerializerDllIntermediateFolder)">
     <Delete Condition="Exists('$(_SerializerDllIntermediateFolder)') == 'true'" Files="$(_SerializerDllIntermediateFolder)" ContinueOnError="true"/>
     <Delete Condition="Exists('$(_SerializerPdbIntermediateFolder)') == 'true'" Files="$(_SerializerPdbIntermediateFolder)" ContinueOnError="true"/>
     <Delete Condition="Exists('$(_SerializerCsIntermediateFolder)') == 'true'"  Files="$(_SerializerCsIntermediateFolder)" ContinueOnError="true"/>
