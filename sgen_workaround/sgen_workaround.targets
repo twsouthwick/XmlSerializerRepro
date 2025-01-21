@@ -1,0 +1,29 @@
+<Project>
+
+  <Target Name="RemoveRuntimeAssemblies" BeforeTargets="GenerateRspFiles">
+    <ItemGroup>
+      <_SGenReferences Include="@(ReferencePath)" Condition="'%(ReferencePath.FrameworkReferenceName)' != 'Microsoft.WindowsDesktop.App.WindowsForms'" />
+    </ItemGroup>
+    <PropertyGroup>
+      <SGenReferences>@(_SGenReferences)</SGenReferences>
+    </PropertyGroup>
+  </Target>
+
+  <!-- Copied from Microsoft.XmlSerializer.Generator -->
+  <Target Name="GenerateSerializationAssembly" AfterTargets="Build" Inputs="@(_SGenReferences);@(IntermediateAssembly)" Outputs="$(_SerializerDllIntermediateFolder)">
+    <Delete Condition="Exists('$(_SerializerDllIntermediateFolder)') == 'true'" Files="$(_SerializerDllIntermediateFolder)" ContinueOnError="true"/>
+    <Delete Condition="Exists('$(_SerializerPdbIntermediateFolder)') == 'true'" Files="$(_SerializerPdbIntermediateFolder)" ContinueOnError="true"/>
+    <Delete Condition="Exists('$(_SerializerCsIntermediateFolder)') == 'true'"  Files="$(_SerializerCsIntermediateFolder)" ContinueOnError="true"/>
+    <Message Text="Running Serialization Tool" Importance="normal" />
+    <!-- Modified this command to use a custom runtimeconfig. -->
+    <Exec Command="dotnet exec --runtimeConfig &quot;$(MSBuildThisFileDirectory)sgen_runtime.json&quot; $(PkgMicrosoft_XmlSerializer_Generator)\lib\netstandard2.0\dotnet-Microsoft.XmlSerializer.Generator.dll &quot;$(IntermediateOutputPath)$(AssemblyName)$(TargetExt)&quot; --force --quiet $(_SgenRspFilePath)" ContinueOnError="true"/>
+    <Warning Condition="Exists('$(_SerializerCsIntermediateFolder)') != 'true'" Text="$(_SGenWarningText)" />
+    <Csc Condition="Exists('$(_SerializerCsIntermediateFolder)') and !Exists('$(_CscRspFilePath)')" ContinueOnError="true" OutputAssembly="$(_SerializerDllIntermediateFolder)" References="@(_SGenReferences);@(IntermediateAssembly)" Optimize="$(Optimize)" EmitDebugInformation="$(DebugSymbols)" Sources="$(_SerializerCsIntermediateFolder);$(_SerializerCsAssemblyInfoIntermediateFolder)" TargetType="Library" ToolExe="$(CscToolExe)" ToolPath="$(CscToolPath)" DisabledWarnings="$(_SerializationAssemblyDisabledWarnings)"/>
+    <Csc Condition="Exists('$(_SerializerCsIntermediateFolder)') and Exists('$(_CscRspFilePath)')" ContinueOnError="true" OutputAssembly="$(_SerializerDllIntermediateFolder)" References="@(_SGenReferences);@(IntermediateAssembly)" Optimize="$(Optimize)" EmitDebugInformation="$(DebugSymbols)" Sources="$(_SerializerCsIntermediateFolder);$(_SerializerCsAssemblyInfoIntermediateFolder)" TargetType="Library" ResponseFiles="$(_CscRspFilePath)"  ToolExe="$(CscToolExe)" ToolPath="$(CscToolPath)" DisabledWarnings="$(_SerializationAssemblyDisabledWarnings)"/>
+    <Warning Condition="Exists('$(_SerializerDllIntermediateFolder)') != 'true' And Exists('$(_SerializerCsIntermediateFolder)') == 'true'" Text="$(_SGenWarningText)"/>
+    <Copy Condition="Exists('$(_SerializerDllIntermediateFolder)') == 'true'" SourceFiles="$(_SerializerDllIntermediateFolder)" DestinationFolder="$(OutputPath)" />
+    <Delete Condition="Exists('$(_SgenRspFilePath)')" Files="$(_SgenRspFilePath)" />
+    <Delete Condition="Exists('$(_CscRspFilePath)')" Files="$(_CscRspFilePath)" />
+  </Target> 
+
+</Project>

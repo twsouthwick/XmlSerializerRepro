@@ -1,0 +1,6 @@
+<Project>
+
+  <!-- Overrwrite sgen targets to allow loading actual runtime types for Windows Forms -->
+  <Import Project="$(MSBuildThisFileDirectory)sgen_workaround/sgen_workaround.targets" /> 
+
+</Project>
